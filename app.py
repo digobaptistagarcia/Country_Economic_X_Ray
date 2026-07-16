@@ -84,6 +84,165 @@ def era_cagr_series(df: pd.DataFrame, value_col: str, bounds):
 
 
 # --------------------------------------------------------------------------
+# Chart builders — charts 4-9 (each isolated so it can be reused/tested
+# independently, matching v1's inline-figure pattern otherwise)
+# --------------------------------------------------------------------------
+def build_government_size_chart(cdf: pd.DataFrame) -> go.Figure:
+    """Chart 4 — Government Size: csh_g (share of government spending in GDP)."""
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=cdf["year"],
+            y=cdf["csh_g"] * 100,
+            mode="lines",
+            name="Government share of GDP",
+            line=dict(color="#AB63FA", width=2),
+            hovertemplate="%{x}: %{y:.1f}%<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        yaxis_title="Government spending (% of GDP)",
+        xaxis_title="Year",
+        hovermode="x unified",
+        margin=dict(t=20, b=20),
+        height=420,
+    )
+    return fig
+
+
+def build_work_effort_chart(cdf: pd.DataFrame) -> go.Figure:
+    """Chart 5 — Work Effort: avh (average annual hours worked per worker)."""
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=cdf["year"],
+            y=cdf["avh"],
+            mode="lines",
+            name="Average annual hours worked",
+            line=dict(color="#FFA15A", width=2),
+            hovertemplate="%{x}: %{y:,.0f} hrs<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        yaxis_title="Average annual hours worked per worker",
+        xaxis_title="Year",
+        hovermode="x unified",
+        margin=dict(t=20, b=20),
+        height=420,
+    )
+    return fig
+
+
+def build_human_capital_chart(cdf: pd.DataFrame) -> go.Figure:
+    """Chart 6 — Human Capital: hc (human capital index)."""
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=cdf["year"],
+            y=cdf["hc"],
+            mode="lines",
+            name="Human capital index",
+            line=dict(color="#19D3F3", width=2),
+            hovertemplate="%{x}: %{y:.2f}<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        yaxis_title="Human capital index (education & skills, 1=baseline)",
+        xaxis_title="Year",
+        hovermode="x unified",
+        margin=dict(t=20, b=20),
+        height=420,
+    )
+    return fig
+
+
+def build_investment_rate_chart(cdf: pd.DataFrame) -> go.Figure:
+    """Chart 7 — Investment Rate: csh_i (share of capital investment in GDP)."""
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=cdf["year"],
+            y=cdf["csh_i"] * 100,
+            mode="lines",
+            name="Investment share of GDP",
+            line=dict(color="#00CC96", width=2),
+            hovertemplate="%{x}: %{y:.1f}%<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        yaxis_title="Capital investment (% of GDP)",
+        xaxis_title="Year",
+        hovermode="x unified",
+        margin=dict(t=20, b=20),
+        height=420,
+    )
+    return fig
+
+
+def build_income_split_chart(cdf: pd.DataFrame) -> go.Figure:
+    """Chart 8 — Income Split: labsh (labor share of income)."""
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=cdf["year"],
+            y=cdf["labsh"] * 100,
+            mode="lines",
+            name="Labor share of income",
+            line=dict(color="#EF553B", width=2),
+            hovertemplate="%{x}: %{y:.1f}%<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        yaxis_title="Labor share of income (%)",
+        xaxis_title="Year",
+        hovermode="x unified",
+        margin=dict(t=20, b=20),
+        height=420,
+        yaxis_range=[0, 100],
+    )
+    return fig
+
+
+def build_trade_openness_chart(cdf: pd.DataFrame) -> go.Figure:
+    """Chart 9 — Trade Openness: csh_x (exports) vs. |csh_m| (imports), stacked."""
+    exports = cdf["csh_x"] * 100
+    imports = cdf["csh_m"].abs() * 100  # csh_m is stored as a negative share in PWT
+
+    fig = go.Figure()
+    fig.add_trace(
+        go.Scatter(
+            x=cdf["year"],
+            y=exports,
+            mode="lines",
+            name="Exports (% of GDP)",
+            stackgroup="one",
+            line=dict(color="#636EFA", width=0.5),
+            hovertemplate="%{x}: %{y:.1f}%<extra></extra>",
+        )
+    )
+    fig.add_trace(
+        go.Scatter(
+            x=cdf["year"],
+            y=imports,
+            mode="lines",
+            name="Imports (% of GDP)",
+            stackgroup="one",
+            line=dict(color="#EF553B", width=0.5),
+            hovertemplate="%{x}: %{y:.1f}%<extra></extra>",
+        )
+    )
+    fig.update_layout(
+        yaxis_title="Trade flows (% of GDP, stacked)",
+        xaxis_title="Year",
+        hovermode="x unified",
+        margin=dict(t=20, b=20),
+        height=420,
+        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="left", x=0),
+    )
+    return fig
+
+
+# --------------------------------------------------------------------------
 # Load data + sidebar/country selector
 # --------------------------------------------------------------------------
 df = load_data(DATA_PATH)
@@ -281,6 +440,97 @@ else:
         legend=dict(orientation="h", yanchor="bottom", y=1.12, xanchor="left", x=0),
     )
     st.plotly_chart(fig3, use_container_width=True)
+
+st.divider()
+
+# --------------------------------------------------------------------------
+# Chart 4 — Government Size
+# --------------------------------------------------------------------------
+st.subheader("4. Government Size")
+st.markdown(
+    "The share of government spending in GDP indicates the size of the public "
+    "sector relative to the overall economy. A rising share can reflect expanding "
+    "public services, but persistently high levels also raise crowding-out risk — "
+    "less room for private investment and slower long-run growth."
+)
+st.plotly_chart(build_government_size_chart(cdf), use_container_width=True)
+
+st.divider()
+
+# --------------------------------------------------------------------------
+# Chart 5 — Work Effort
+# --------------------------------------------------------------------------
+st.subheader("5. Work Effort")
+st.markdown(
+    "Average annual hours worked shows whether a country's living standards are "
+    "built on working more, rather than on higher output per hour worked. A "
+    "country that relies on long hours to sustain GDP per capita has less "
+    "productivity cushion than one where the same living standard comes from "
+    "fewer, more productive hours."
+)
+if cdf["avh"].isna().all():
+    st.info("Data not available for this country.")
+else:
+    st.plotly_chart(build_work_effort_chart(cdf), use_container_width=True)
+
+st.divider()
+
+# --------------------------------------------------------------------------
+# Chart 6 — Human Capital
+# --------------------------------------------------------------------------
+st.subheader("6. Human Capital")
+st.markdown(
+    "The human capital index captures the skills and education embedded in the "
+    "workforce, a key structural driver of productivity growth. Unlike "
+    "hours-based gains, improvements in human capital tend to be durable and "
+    "compound over time."
+)
+if cdf["hc"].isna().all():
+    st.info("Data not available for this country.")
+else:
+    st.plotly_chart(build_human_capital_chart(cdf), use_container_width=True)
+
+st.divider()
+
+# --------------------------------------------------------------------------
+# Chart 7 — Investment Rate
+# --------------------------------------------------------------------------
+st.subheader("7. Investment Rate")
+st.markdown(
+    "Capital investment as a share of GDP reflects how much of current output is "
+    "being redirected into future productive capacity — plant, equipment, and "
+    "infrastructure. Sustained low investment rates constrain how fast an economy "
+    "can grow its capital stock going forward."
+)
+st.plotly_chart(build_investment_rate_chart(cdf), use_container_width=True)
+
+st.divider()
+
+# --------------------------------------------------------------------------
+# Chart 8 — Income Split
+# --------------------------------------------------------------------------
+st.subheader("8. Income Split")
+st.markdown(
+    "The labor share of income shows how national output is divided between "
+    "workers and capital owners. A declining labor share means growth is "
+    "increasingly accruing to capital — a structural shift with direct "
+    "implications for inequality and consumption-driven demand."
+)
+st.plotly_chart(build_income_split_chart(cdf), use_container_width=True)
+
+st.divider()
+
+# --------------------------------------------------------------------------
+# Chart 9 — Trade Openness
+# --------------------------------------------------------------------------
+st.subheader("9. Trade Openness")
+st.markdown(
+    "Exports and imports as shares of GDP, stacked together, show how exposed "
+    "the economy is to external demand and supply shocks. A high combined share "
+    "means growth and stability are more tightly linked to global conditions "
+    "outside the country's direct control."
+)
+st.plotly_chart(build_trade_openness_chart(cdf), use_container_width=True)
 
 st.divider()
 st.caption("Source: Penn World Table 10.01 (Feenstra, Inklaar & Timmer). Data as loaded from pwt_clean.parquet.")
